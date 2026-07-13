@@ -1,0 +1,18 @@
+{
+  "name": "project-template",
+  "version": "0.1.0",
+  "description": "Template repository for bootstrapping a new project with the Sandcastle agent harness. Rename this and update the description per project.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sandcastle": "npx tsx .sandcastle/main.ts",
+    "init": "bash scripts/init.sh"
+  },
+  "dependencies": {
+    "@ai-hero/sandcastle": "^0.10.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

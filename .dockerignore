@@ -1,0 +1,23 @@
+# Dependencies — never copy host-installed (possibly wrong-platform) native
+# binaries into an image. Install fresh with `npm ci` inside the container instead.
+node_modules
+
+# Build output
+.next
+out
+build
+dist
+
+# Env / secrets
+.env
+.env.*.local
+.sandcastle/.env
+
+# Git
+.git
+.gitignore
+
+# IDE / OS junk
+.idea
+.vscode
+.DS_Store
