@@ -33,9 +33,12 @@ npm run typecheck  # Run tsc --noEmit
   - `layout.tsx` — Root layout with ClerkProvider
   - `page.tsx` — Authenticated home page (placeholder launchpad)
   - `sign-in/[[...sign-in]]/page.tsx` — Clerk sign-in page
-- `src/proxy.ts` — Next.js proxy (middleware) enforcing auth on all routes except sign-in
+- `src/proxy.ts` — Next.js proxy (middleware) enforcing auth on all routes except sign-in; also enforces role-gate for `/apps/*` routes via session claims
 - `src/access-policy.ts` — Pure module: role→app access mapping, no I/O, no framework deps
 - `src/access-policy.test.ts` — Exhaustive unit tests for access policy
 - `src/auth.ts` — Auth/Session adapter: isolates Clerk behind `getCurrentUser()` and `requireRole()`. Only module that imports Clerk server APIs.
 - `src/auth.test.ts` — Integration-boundary tests for the auth adapter (mocks Clerk at the import boundary)
+- `src/role-gate.ts` — Reusable role-gate: maps URL path to AppId and checks role access. Pure module, no Clerk/Next.js deps. Used by middleware and app pages.
+- `src/role-gate.test.ts` — Unit + integration tests for role-gate (includes auth adapter integration verifying wrong-role rejection)
+- `src/app/apps/[appId]/page.tsx` — Stub downstream app page with server-side role enforcement (defense in depth behind middleware gate)
 - `.env.local` — Clerk keys (not committed)
