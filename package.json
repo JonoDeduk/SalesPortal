@@ -5,6 +5,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
     "sandcastle": "npx tsx .sandcastle/main.ts",
     "init": "bash scripts/init.sh"
   },
@@ -13,6 +15,7 @@
   },
   "devDependencies": {
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.10"
   }
 }
