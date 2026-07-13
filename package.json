@@ -1,19 +1,29 @@
 {
-  "name": "project-template",
+  "name": "sales-portal",
   "version": "0.1.0",
-  "description": "Template repository for bootstrapping a new project with the Sandcastle agent harness. Rename this and update the description per project.",
+  "description": "Internal sales portal — auth spine and role-based launchpad.",
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "sandcastle": "npx tsx .sandcastle/main.ts",
     "init": "bash scripts/init.sh"
   },
   "dependencies": {
-    "@ai-hero/sandcastle": "^0.10.0"
+    "@ai-hero/sandcastle": "^0.10.0",
+    "@clerk/nextjs": "^7.5.17",
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@types/node": "26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "vitest": "^4.1.10"

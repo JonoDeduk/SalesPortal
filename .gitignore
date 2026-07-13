@@ -38,3 +38,10 @@ node_modules/
 
 ### Sandcastle ###
 .sandcastle/.env
+
+### Next.js ###
+.next/
+tsconfig.tsbuildinfo
+
+### Environment ###
+.env*.local
