@@ -36,4 +36,6 @@ npm run typecheck  # Run tsc --noEmit
 - `src/proxy.ts` — Next.js proxy (middleware) enforcing auth on all routes except sign-in
 - `src/access-policy.ts` — Pure module: role→app access mapping, no I/O, no framework deps
 - `src/access-policy.test.ts` — Exhaustive unit tests for access policy
+- `src/auth.ts` — Auth/Session adapter: isolates Clerk behind `getCurrentUser()` and `requireRole()`. Only module that imports Clerk server APIs.
+- `src/auth.test.ts` — Integration-boundary tests for the auth adapter (mocks Clerk at the import boundary)
 - `.env.local` — Clerk keys (not committed)
