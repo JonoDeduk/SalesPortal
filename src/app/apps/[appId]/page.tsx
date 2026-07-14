@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/auth";
 import { canAccess, allAppIds, type AppId } from "@/access-policy";
 import { getAppEntries } from "@/app-directory";
-import { listUsers } from "@/user-admin";
+import { listUsers, listPendingInvitations } from "@/user-admin";
 import { InviteForm } from "./invite-form";
+import { RevokeButton } from "./revoke-button";
 
 export default async function AppPage({
   params,
@@ -48,7 +49,10 @@ export default async function AppPage({
 }
 
 async function AdminPanel() {
-  const members = await listUsers();
+  const [members, pendingInvitations] = await Promise.all([
+    listUsers(),
+    listPendingInvitations(),
+  ]);
 
   return (
     <main style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
@@ -106,6 +110,52 @@ async function AdminPanel() {
                     >
                       {member.status}
                     </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section style={{ marginTop: "2rem" }}>
+        <h2>Pending Invitations</h2>
+        {pendingInvitations.length === 0 ? (
+          <p style={{ color: "#6b7280" }}>No pending invitations.</p>
+        ) : (
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              marginTop: "1rem",
+            }}
+          >
+            <thead>
+              <tr
+                style={{
+                  borderBottom: "2px solid #e5e7eb",
+                  textAlign: "left",
+                }}
+              >
+                <th style={{ padding: "0.75rem 1rem" }}>Email</th>
+                <th style={{ padding: "0.75rem 1rem" }}>Role</th>
+                <th style={{ padding: "0.75rem 1rem" }}>Sent</th>
+                <th style={{ padding: "0.75rem 1rem" }}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {pendingInvitations.map((inv) => (
+                <tr
+                  key={inv.id}
+                  style={{ borderBottom: "1px solid #e5e7eb" }}
+                >
+                  <td style={{ padding: "0.75rem 1rem" }}>{inv.email}</td>
+                  <td style={{ padding: "0.75rem 1rem" }}>
+                    {inv.role ?? "—"}
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem" }}>{inv.sentAt}</td>
+                  <td style={{ padding: "0.75rem 1rem" }}>
+                    <RevokeButton invitationId={inv.id} />
                   </td>
                 </tr>
               ))}

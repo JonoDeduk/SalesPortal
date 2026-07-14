@@ -1,7 +1,7 @@
 "use server";
 
 import { adminAction, type ActionResult } from "@/admin-action";
-import { inviteUser } from "@/user-admin";
+import { inviteUser, revokeInvitation } from "@/user-admin";
 import { revalidatePath } from "next/cache";
 import { roles } from "@/access-policy";
 
@@ -37,6 +37,24 @@ export const invite = adminAction(
         };
       }
       throw err;
+    }
+  },
+);
+
+export const revoke = adminAction(
+  async (formData: FormData): Promise<ActionResult> => {
+    const invitationId = formData.get("invitationId");
+
+    if (!invitationId || typeof invitationId !== "string") {
+      return { ok: false, error: "Missing invitation ID." };
+    }
+
+    try {
+      await revokeInvitation(invitationId);
+      revalidatePath("/apps/admin");
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Failed to revoke invitation." };
     }
   },
 );

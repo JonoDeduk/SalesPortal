@@ -8,6 +8,13 @@ export type TeamMember = {
   status: "Active" | "Locked";
 };
 
+export type PendingInvitation = {
+  id: string;
+  email: string;
+  role: Role | null;
+  sentAt: string;
+};
+
 export async function inviteUser(email: string, role: Role): Promise<void> {
   const client = await clerkClient();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -37,6 +44,28 @@ export async function listUsers(): Promise<TeamMember[]> {
       status: user.locked ? "Locked" : "Active",
     };
   });
+}
+
+export async function listPendingInvitations(): Promise<PendingInvitation[]> {
+  const client = await clerkClient();
+  const { data: invitations } = await client.invitations.getInvitationList({
+    status: "pending",
+  });
+
+  return invitations.map((inv) => {
+    const rawRole = (inv.publicMetadata as { role?: string }).role;
+    return {
+      id: inv.id,
+      email: inv.emailAddress,
+      role: isRole(rawRole) ? rawRole : null,
+      sentAt: new Date(inv.createdAt).toLocaleDateString(),
+    };
+  });
+}
+
+export async function revokeInvitation(invitationId: string): Promise<void> {
+  const client = await clerkClient();
+  await client.invitations.revokeInvitation(invitationId);
 }
 
 function isRole(value: unknown): value is Role {

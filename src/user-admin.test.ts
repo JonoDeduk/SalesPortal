@@ -1,23 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockGetUserList, mockCreateInvitation } = vi.hoisted(() => ({
+const { mockGetUserList, mockCreateInvitation, mockGetInvitationList, mockRevokeInvitation } = vi.hoisted(() => ({
   mockGetUserList: vi.fn(),
   mockCreateInvitation: vi.fn(),
+  mockGetInvitationList: vi.fn(),
+  mockRevokeInvitation: vi.fn(),
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({
   clerkClient: () =>
     Promise.resolve({
       users: { getUserList: mockGetUserList },
-      invitations: { createInvitation: mockCreateInvitation },
+      invitations: {
+        createInvitation: mockCreateInvitation,
+        getInvitationList: mockGetInvitationList,
+        revokeInvitation: mockRevokeInvitation,
+      },
     }),
 }));
 
-import { listUsers, inviteUser } from "./user-admin.js";
+import { listUsers, inviteUser, listPendingInvitations, revokeInvitation } from "./user-admin.js";
 
 beforeEach(() => {
   mockGetUserList.mockReset();
   mockCreateInvitation.mockReset();
+  mockGetInvitationList.mockReset();
+  mockRevokeInvitation.mockReset();
 });
 
 function clerkUser(overrides: {
@@ -207,5 +215,95 @@ describe("inviteUser", () => {
     await expect(inviteUser("dup@co.com", "manager")).rejects.toThrow(
       "duplicate",
     );
+  });
+});
+
+function clerkInvitation(overrides: {
+  id: string;
+  email: string;
+  role?: string;
+  createdAt?: number;
+}) {
+  return {
+    id: overrides.id,
+    emailAddress: overrides.email,
+    publicMetadata: overrides.role ? { role: overrides.role } : {},
+    createdAt: overrides.createdAt ?? 1720000000000,
+  };
+}
+
+describe("listPendingInvitations", () => {
+  it("maps Clerk invitations to PendingInvitation shape", async () => {
+    mockGetInvitationList.mockResolvedValue({
+      data: [
+        clerkInvitation({ id: "inv_1", email: "mgr@co.com", role: "manager", createdAt: 1720000000000 }),
+        clerkInvitation({ id: "inv_2", email: "rep@co.com", role: "sales_rep", createdAt: 1720086400000 }),
+      ],
+    });
+
+    const result = await listPendingInvitations();
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({ id: "inv_1", email: "mgr@co.com", role: "manager" });
+    expect(result[1]).toMatchObject({ id: "inv_2", email: "rep@co.com", role: "sales_rep" });
+  });
+
+  it("passes status filter for pending invitations", async () => {
+    mockGetInvitationList.mockResolvedValue({ data: [] });
+
+    await listPendingInvitations();
+
+    expect(mockGetInvitationList).toHaveBeenCalledWith({ status: "pending" });
+  });
+
+  it("returns null role when invitation has no role metadata", async () => {
+    mockGetInvitationList.mockResolvedValue({
+      data: [clerkInvitation({ id: "inv_1", email: "no-role@co.com" })],
+    });
+
+    const [inv] = await listPendingInvitations();
+    expect(inv.role).toBeNull();
+  });
+
+  it("returns null role for unrecognized role strings", async () => {
+    mockGetInvitationList.mockResolvedValue({
+      data: [clerkInvitation({ id: "inv_1", email: "bad@co.com", role: "superuser" })],
+    });
+
+    const [inv] = await listPendingInvitations();
+    expect(inv.role).toBeNull();
+  });
+
+  it("returns empty array when no pending invitations exist", async () => {
+    mockGetInvitationList.mockResolvedValue({ data: [] });
+
+    const result = await listPendingInvitations();
+    expect(result).toEqual([]);
+  });
+
+  it("formats sentAt as a locale date string", async () => {
+    mockGetInvitationList.mockResolvedValue({
+      data: [clerkInvitation({ id: "inv_1", email: "a@co.com", role: "manager", createdAt: 1720000000000 })],
+    });
+
+    const [inv] = await listPendingInvitations();
+    expect(typeof inv.sentAt).toBe("string");
+    expect(inv.sentAt.length).toBeGreaterThan(0);
+  });
+});
+
+describe("revokeInvitation", () => {
+  it("calls Clerk revokeInvitation with the invitation ID", async () => {
+    mockRevokeInvitation.mockResolvedValue({});
+
+    await revokeInvitation("inv_123");
+
+    expect(mockRevokeInvitation).toHaveBeenCalledWith("inv_123");
+  });
+
+  it("propagates Clerk errors", async () => {
+    mockRevokeInvitation.mockRejectedValue(new Error("not found"));
+
+    await expect(revokeInvitation("inv_bad")).rejects.toThrow("not found");
   });
 });
