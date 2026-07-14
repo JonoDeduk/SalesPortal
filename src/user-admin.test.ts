@@ -1,18 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockGetUserList } = vi.hoisted(() => ({
+const { mockGetUserList, mockCreateInvitation } = vi.hoisted(() => ({
   mockGetUserList: vi.fn(),
+  mockCreateInvitation: vi.fn(),
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({
   clerkClient: () =>
-    Promise.resolve({ users: { getUserList: mockGetUserList } }),
+    Promise.resolve({
+      users: { getUserList: mockGetUserList },
+      invitations: { createInvitation: mockCreateInvitation },
+    }),
 }));
 
-import { listUsers } from "./user-admin.js";
+import { listUsers, inviteUser } from "./user-admin.js";
 
 beforeEach(() => {
   mockGetUserList.mockReset();
+  mockCreateInvitation.mockReset();
 });
 
 function clerkUser(overrides: {
@@ -148,5 +153,59 @@ describe("listUsers", () => {
     const result = await listUsers();
     expect(result[0].status).toBe("Active");
     expect(result[1].status).toBe("Locked");
+  });
+});
+
+describe("inviteUser", () => {
+  it("calls Clerk createInvitation with role in publicMetadata", async () => {
+    mockCreateInvitation.mockResolvedValue({});
+
+    await inviteUser("new@co.com", "manager");
+
+    expect(mockCreateInvitation).toHaveBeenCalledWith({
+      emailAddress: "new@co.com",
+      redirectUrl: "/sign-up",
+      publicMetadata: { role: "manager" },
+    });
+  });
+
+  it("attaches sales_rep role to invitation", async () => {
+    mockCreateInvitation.mockResolvedValue({});
+
+    await inviteUser("rep@co.com", "sales_rep");
+
+    expect(mockCreateInvitation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        publicMetadata: { role: "sales_rep" },
+      }),
+    );
+  });
+
+  it("derives redirect_url from NEXT_PUBLIC_APP_URL", async () => {
+    const original = process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "https://portal.example.com";
+    mockCreateInvitation.mockResolvedValue({});
+
+    await inviteUser("test@co.com", "manager");
+
+    expect(mockCreateInvitation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        redirectUrl: "https://portal.example.com/sign-up",
+      }),
+    );
+    process.env.NEXT_PUBLIC_APP_URL = original;
+  });
+
+  it("propagates Clerk errors", async () => {
+    mockCreateInvitation.mockRejectedValue(
+      Object.assign(new Error("duplicate"), {
+        status: 422,
+        errors: [{ code: "duplicate_record" }],
+      }),
+    );
+
+    await expect(inviteUser("dup@co.com", "manager")).rejects.toThrow(
+      "duplicate",
+    );
   });
 });

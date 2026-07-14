@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { appIdFromPath } from "./role-gate";
 import { canAccess, type Role } from "./access-policy";
 
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)"]);
+const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
 
 function roleFromClaims(
   claims: Record<string, unknown> | null | undefined,

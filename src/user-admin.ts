@@ -8,6 +8,16 @@ export type TeamMember = {
   status: "Active" | "Locked";
 };
 
+export async function inviteUser(email: string, role: Role): Promise<void> {
+  const client = await clerkClient();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  await client.invitations.createInvitation({
+    emailAddress: email,
+    redirectUrl: `${appUrl}/sign-up`,
+    publicMetadata: { role },
+  });
+}
+
 export async function listUsers(): Promise<TeamMember[]> {
   const client = await clerkClient();
   const { data: users } = await client.users.getUserList();

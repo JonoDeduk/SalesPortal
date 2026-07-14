@@ -73,6 +73,14 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 ```
 
+Set the app's public URL (used as the base for invitation redirect links):
+
+```env
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+In production, set this to your deployed URL (e.g. `https://portal.yourdomain.com`).
+
 Optionally configure the sign-in redirect path (defaults are usually fine):
 
 ```env

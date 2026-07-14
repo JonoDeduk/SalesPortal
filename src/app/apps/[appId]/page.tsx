@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/auth";
 import { canAccess, allAppIds, type AppId } from "@/access-policy";
 import { getAppEntries } from "@/app-directory";
 import { listUsers } from "@/user-admin";
+import { InviteForm } from "./invite-form";
 
 export default async function AppPage({
   params,
@@ -55,6 +56,11 @@ async function AdminPanel() {
         <a href="/">&#8592; Back to Launchpad</a>
       </nav>
       <h1>Admin Panel</h1>
+
+      <section style={{ marginTop: "2rem" }}>
+        <h2>Invite Team Member</h2>
+        <InviteForm />
+      </section>
 
       <section style={{ marginTop: "2rem" }}>
         <h2>Team Members</h2>
