@@ -1,7 +1,7 @@
 "use server";
 
 import { adminAction, type ActionResult } from "@/admin-action";
-import { inviteUser, revokeInvitation } from "@/user-admin";
+import { inviteUser, revokeInvitation, getUser, deactivateUser } from "@/user-admin";
 import { revalidatePath } from "next/cache";
 import { roles } from "@/access-policy";
 
@@ -55,6 +55,30 @@ export const revoke = adminAction(
       return { ok: true };
     } catch {
       return { ok: false, error: "Failed to revoke invitation." };
+    }
+  },
+);
+
+export const deactivate = adminAction(
+  async (formData: FormData): Promise<ActionResult> => {
+    const userId = formData.get("userId");
+
+    if (!userId || typeof userId !== "string") {
+      return { ok: false, error: "Missing user ID." };
+    }
+
+    const target = await getUser(userId);
+
+    if (target.role === "admin") {
+      return { ok: false, error: "Cannot deactivate an admin account." };
+    }
+
+    try {
+      await deactivateUser(userId);
+      revalidatePath("/apps/admin");
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Failed to deactivate user." };
     }
   },
 );

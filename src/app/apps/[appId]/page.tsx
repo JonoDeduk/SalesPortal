@@ -5,6 +5,7 @@ import { getAppEntries } from "@/app-directory";
 import { listUsers, listPendingInvitations } from "@/user-admin";
 import { InviteForm } from "./invite-form";
 import { RevokeButton } from "./revoke-button";
+import { DeactivateButton } from "./deactivate-button";
 
 export default async function AppPage({
   params,
@@ -88,6 +89,7 @@ async function AdminPanel() {
                 <th style={{ padding: "0.75rem 1rem" }}>Email</th>
                 <th style={{ padding: "0.75rem 1rem" }}>Role</th>
                 <th style={{ padding: "0.75rem 1rem" }}>Status</th>
+                <th style={{ padding: "0.75rem 1rem" }}></th>
               </tr>
             </thead>
             <tbody>
@@ -110,6 +112,11 @@ async function AdminPanel() {
                     >
                       {member.status}
                     </span>
+                  </td>
+                  <td style={{ padding: "0.75rem 1rem" }}>
+                    {member.status === "Active" && (
+                      <DeactivateButton userId={member.id} />
+                    )}
                   </td>
                 </tr>
               ))}

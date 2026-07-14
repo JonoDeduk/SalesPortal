@@ -1,16 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockGetUserList, mockCreateInvitation, mockGetInvitationList, mockRevokeInvitation } = vi.hoisted(() => ({
+const { mockGetUserList, mockCreateInvitation, mockGetInvitationList, mockRevokeInvitation, mockGetUser, mockLockUser } = vi.hoisted(() => ({
   mockGetUserList: vi.fn(),
   mockCreateInvitation: vi.fn(),
   mockGetInvitationList: vi.fn(),
   mockRevokeInvitation: vi.fn(),
+  mockGetUser: vi.fn(),
+  mockLockUser: vi.fn(),
 }));
 
 vi.mock("@clerk/nextjs/server", () => ({
   clerkClient: () =>
     Promise.resolve({
-      users: { getUserList: mockGetUserList },
+      users: { getUserList: mockGetUserList, getUser: mockGetUser, lockUser: mockLockUser },
       invitations: {
         createInvitation: mockCreateInvitation,
         getInvitationList: mockGetInvitationList,
@@ -19,13 +21,15 @@ vi.mock("@clerk/nextjs/server", () => ({
     }),
 }));
 
-import { listUsers, inviteUser, listPendingInvitations, revokeInvitation } from "./user-admin.js";
+import { listUsers, inviteUser, listPendingInvitations, revokeInvitation, getUser, deactivateUser } from "./user-admin.js";
 
 beforeEach(() => {
   mockGetUserList.mockReset();
   mockCreateInvitation.mockReset();
   mockGetInvitationList.mockReset();
   mockRevokeInvitation.mockReset();
+  mockGetUser.mockReset();
+  mockLockUser.mockReset();
 });
 
 function clerkUser(overrides: {
@@ -305,5 +309,63 @@ describe("revokeInvitation", () => {
     mockRevokeInvitation.mockRejectedValue(new Error("not found"));
 
     await expect(revokeInvitation("inv_bad")).rejects.toThrow("not found");
+  });
+});
+
+describe("getUser", () => {
+  it("maps Clerk user to TeamMember shape", async () => {
+    mockGetUser.mockResolvedValue(
+      clerkUser({ id: "u_1", email: "mgr@co.com", role: "manager" }),
+    );
+
+    const result = await getUser("u_1");
+
+    expect(result).toEqual({
+      id: "u_1",
+      email: "mgr@co.com",
+      role: "manager",
+      status: "Active",
+    });
+    expect(mockGetUser).toHaveBeenCalledWith("u_1");
+  });
+
+  it("reflects locked status", async () => {
+    mockGetUser.mockResolvedValue(
+      clerkUser({ id: "u_1", email: "locked@co.com", role: "sales_rep", locked: true }),
+    );
+
+    const result = await getUser("u_1");
+    expect(result.status).toBe("Locked");
+  });
+
+  it("returns null role for unrecognized role strings", async () => {
+    mockGetUser.mockResolvedValue(
+      clerkUser({ id: "u_1", email: "bad@co.com", role: "superuser" }),
+    );
+
+    const result = await getUser("u_1");
+    expect(result.role).toBeNull();
+  });
+
+  it("propagates Clerk errors", async () => {
+    mockGetUser.mockRejectedValue(new Error("not found"));
+
+    await expect(getUser("u_bad")).rejects.toThrow("not found");
+  });
+});
+
+describe("deactivateUser", () => {
+  it("calls Clerk lockUser with the user ID", async () => {
+    mockLockUser.mockResolvedValue({});
+
+    await deactivateUser("u_123");
+
+    expect(mockLockUser).toHaveBeenCalledWith("u_123");
+  });
+
+  it("propagates Clerk errors", async () => {
+    mockLockUser.mockRejectedValue(new Error("lock failed"));
+
+    await expect(deactivateUser("u_bad")).rejects.toThrow("lock failed");
   });
 });

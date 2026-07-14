@@ -68,6 +68,30 @@ export async function revokeInvitation(invitationId: string): Promise<void> {
   await client.invitations.revokeInvitation(invitationId);
 }
 
+export async function getUser(userId: string): Promise<TeamMember> {
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId);
+
+  const email =
+    user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId)
+      ?.emailAddress ?? user.emailAddresses[0]?.emailAddress ?? "";
+
+  const rawRole = (user.publicMetadata as { role?: string }).role;
+  const role = isRole(rawRole) ? rawRole : null;
+
+  return {
+    id: user.id,
+    email,
+    role,
+    status: user.locked ? "Locked" : "Active",
+  };
+}
+
+export async function deactivateUser(userId: string): Promise<void> {
+  const client = await clerkClient();
+  await client.users.lockUser(userId);
+}
+
 function isRole(value: unknown): value is Role {
   return value === "admin" || value === "manager" || value === "sales_rep";
 }
