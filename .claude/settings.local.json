@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(cat)",
+      "Bash(gh issue *)",
+      "Bash(gh repo *)"
     ]
   }
 }

@@ -5,6 +5,7 @@ export type AuthUser = { id: string; role: Role };
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const { userId } = await auth();
+  console.log({userId});
   if (!userId) return null;
 
   const user = await currentUser();

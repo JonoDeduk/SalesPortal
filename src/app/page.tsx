@@ -5,6 +5,7 @@ import { getAppEntries, type AppEntry } from "@/app-directory";
 
 export default async function HomePage() {
   const user = await getCurrentUser();
+  console.log({user})
 
   const tiles = user ? getAppEntries(appsForRole(user.role)) : [];
 

@@ -9,7 +9,7 @@ build
 dist
 
 # Env / secrets
-.env
+.env.local
 .env.*.local
 .sandcastle/.env
 
